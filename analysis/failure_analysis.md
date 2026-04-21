@@ -1,31 +1,59 @@
 # Báo cáo Phân tích Thất bại (Failure Analysis Report)
 
-## 1. Tổng quan Benchmark
-- **Tổng số cases:** 50
-- **Tỉ lệ Pass/Fail:** X/Y
-- **Điểm RAGAS trung bình:**
-    - Faithfulness: 0.XX
-    - Relevancy: 0.XX
-- **Điểm LLM-Judge trung bình:** X.X / 5.0
+> Ghi chú trung thực: báo cáo này chỉ điền các phần đã có dữ liệu thật từ Role 1.  
+> Các số benchmark Pass/Fail toàn hệ thống sẽ được cập nhật sau khi Role 2 hoàn tất pipeline chạy `main.py`.
 
-## 2. Phân nhóm lỗi (Failure Clustering)
-| Nhóm lỗi | Số lượng | Nguyên nhân dự kiến |
-|----------|----------|---------------------|
-| Hallucination | 5 | Retriever lấy sai context |
-| Incomplete | 3 | Prompt quá ngắn, không yêu cầu chi tiết |
-| Tone Mismatch | 2 | Agent trả lời quá suồng sã |
+## 1. Tổng quan hiện trạng
+- **Dataset Role 1:** đã sinh đủ 60 test cases (`data/golden_set.jsonl`) theo phân phối:
+  - 30 `normal`
+  - 12 `adversarial_prompt_injection`
+  - 8 `edge_ambiguous_ooc`
+  - 6 `conflicting_information`
+  - 4 `multi_turn`
+- **Retrieval metrics implementation:** đã hoàn tất trong `engine/retrieval_eval.py`:
+  - `HitRate@1/@3/@5`
+  - `MRR`
+  - `top_k_sensitivity`
+  - correlation tùy chọn giữa retrieval quality và answer quality (khi có score thật).
 
-## 3. Phân tích 5 Whys (Chọn 3 case tệ nhất)
+## 2. Failure Clustering Framework (để chạy dữ liệu thật)
+Khi có kết quả từ `reports/benchmark_results.json`, phân cụm theo taxonomy sau:
+| Nhóm lỗi | Điều kiện nhận diện | Gợi ý root-cause |
+|----------|---------------------|------------------|
+| Prompt attack | Câu hỏi có injection pattern, trả lời lệch policy/context | Guardrail prompt yếu, thiếu injection detector |
+| Hallucination | Trả lời nội dung không có trong nguồn truy xuất | Retrieval miss hoặc fallback policy chưa chặt |
+| Retrieval miss | `hit_rate@k = 0` với k phù hợp | Chunking/ranking/source mapping chưa tốt |
+| Incomplete | Trả lời thiếu phần bắt buộc, đặc biệt multi-turn | Context carry-over chưa đủ |
+| Tone mismatch | Nội dung đúng nhưng sai phong cách/chính sách diễn đạt | Prompt format/output template chưa chuẩn |
 
-### Case #1: [Mô tả ngắn]
-1. **Symptom:** Agent trả lời sai về...
-2. **Why 1:** LLM không thấy thông tin trong context.
-3. **Why 2:** Vector DB không tìm thấy tài liệu liên quan nhất.
-4. **Why 3:** Chunking size quá lớn làm loãng thông tin quan trọng.
+## 3. 5 Whys Template (sẽ điền bằng case thật)
+
+### Case #1: [Case ID từ benchmark thật]
+1. **Symptom:** ...
+2. **Why 1:** ...
+3. **Why 2:** ...
+4. **Why 3:** ...
 5. **Why 4:** ...
-6. **Root Cause:** Chiến lược Chunking không phù hợp với dữ liệu bảng biểu.
+6. **Root Cause:** ...
 
-## 4. Kế hoạch cải tiến (Action Plan)
-- [ ] Thay đổi Chunking strategy từ Fixed-size sang Semantic Chunking.
-- [ ] Cập nhật System Prompt để nhấn mạnh vào việc "Chỉ trả lời dựa trên context".
-- [ ] Thêm bước Reranking vào Pipeline.
+### Case #2: [Case ID từ benchmark thật]
+1. **Symptom:** ...
+2. **Why 1:** ...
+3. **Why 2:** ...
+4. **Why 3:** ...
+5. **Why 4:** ...
+6. **Root Cause:** ...
+
+### Case #3: [Case ID từ benchmark thật]
+1. **Symptom:** ...
+2. **Why 1:** ...
+3. **Why 2:** ...
+4. **Why 3:** ...
+5. **Why 4:** ...
+6. **Root Cause:** ...
+
+## 4. Action Plan (Role 1 scope)
+- Chuẩn hóa mapping `expected_retrieval_ids` ↔ nguồn tài liệu để đo Hit/MRR chính xác.
+- Ưu tiên cải thiện retrieval theo trình tự: chunking -> ranking -> reranking.
+- Giữ hard-case pack trong regression để không mất coverage red-team sau mỗi lần update.
+- Chỉ công bố số liệu bonus sau khi có run benchmark thật từ pipeline đầy đủ.
