@@ -54,4 +54,4 @@
 ## Assumptions và default đã chốt
 - Dùng OpenAI key sẵn có; nếu thiếu provider thứ 2 thì vẫn dùng 2 model OpenAI khác nhau để đảm bảo tiêu chí “multi-judge”.
 - `reports/` và `data/golden_set.jsonl` được generate local theo `.gitignore`; khi nộp cần chạy lại để tạo artifacts.
-- Không mở rộng scope ngoài rubric (không làm feature sản phẩm mới), chỉ tối ưu để ăn điểm tối đa + bonus kỹ thuật trong đúng pipeline eval.
+
